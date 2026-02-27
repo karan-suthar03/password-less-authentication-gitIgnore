@@ -53,34 +53,6 @@ const RULES = [
     level: "low",
   },
   {
-    name: "screen_resolution_change",
-    description: "Screen resolution differs from enrolled snapshot",
-    test: ({ device, context }) =>
-      device?.contextSnapshot?.screenWidth &&
-      context?.screenWidth &&
-      (device.contextSnapshot.screenWidth !== context.screenWidth ||
-       device.contextSnapshot.screenHeight !== context.screenHeight),
-    level: "low",
-  },
-  {
-    name: "hardware_concurrency_change",
-    description: "CPU core count differs from enrolled snapshot",
-    test: ({ device, context }) =>
-      device?.contextSnapshot?.hardwareConcurrency != null &&
-      context?.hardwareConcurrency != null &&
-      device.contextSnapshot.hardwareConcurrency !== context.hardwareConcurrency,
-    level: "medium",
-  },
-  {
-    name: "device_memory_change",
-    description: "Reported device memory differs from enrolled snapshot",
-    test: ({ device, context }) =>
-      device?.contextSnapshot?.deviceMemory != null &&
-      context?.deviceMemory != null &&
-      device.contextSnapshot.deviceMemory !== context.deviceMemory,
-    level: "medium",
-  },
-  {
     name: "touch_support_change",
     description: "Touch capability changed since enrollment",
     test: ({ device, context }) =>

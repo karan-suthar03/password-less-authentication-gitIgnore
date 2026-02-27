@@ -9,14 +9,7 @@ function gatherDeviceContext() {
     userAgent:           navigator.userAgent,
     platform:            navigator.userAgentData?.platform ?? navigator.platform,
     language:            navigator.language,
-    languages:           [...(navigator.languages ?? [])],
     timezone:            Intl.DateTimeFormat().resolvedOptions().timeZone,
-    timezoneOffset:      new Date().getTimezoneOffset(),
-    screenWidth:         screen.width,
-    screenHeight:        screen.height,
-    colorDepth:          screen.colorDepth,
-    deviceMemory:        navigator.deviceMemory ?? null,
-    hardwareConcurrency: navigator.hardwareConcurrency ?? null,
     touchSupport:        navigator.maxTouchPoints > 0,
   };
 }

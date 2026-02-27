@@ -53,19 +53,11 @@ router.post("/", (req, res) => {
   // Build the baseline contextual snapshot that will be compared on
   // every future login for risk assessment.
   const contextSnapshot = {
-    userAgent:      deviceContext?.userAgent      ?? null,
-    platform:       deviceContext?.platform        ?? null,
-    language:       deviceContext?.language         ?? null,
-    languages:      deviceContext?.languages        ?? null,
-    timezone:       deviceContext?.timezone         ?? null,
-    timezoneOffset: deviceContext?.timezoneOffset   ?? null,
-    screenWidth:    deviceContext?.screenWidth      ?? null,
-    screenHeight:   deviceContext?.screenHeight     ?? null,
-    colorDepth:     deviceContext?.colorDepth       ?? null,
-    deviceMemory:   deviceContext?.deviceMemory     ?? null,
-    hardwareConcurrency: deviceContext?.hardwareConcurrency ?? null,
-    touchSupport:   deviceContext?.touchSupport     ?? null,
-    enrolledAt:     Date.now(),
+    userAgent:           deviceContext?.userAgent           ?? null,
+    platform:            deviceContext?.platform            ?? null,
+    language:            deviceContext?.language            ?? null,
+    timezone:            deviceContext?.timezone            ?? null,
+    touchSupport:        deviceContext?.touchSupport        ?? null,
   };
 
   // Risk check on the incoming context (should be clean for first device)
