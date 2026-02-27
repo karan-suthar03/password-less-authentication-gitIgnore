@@ -21,6 +21,7 @@ import { createUserFromVerified } from "../modules/identity/identity.service.js"
 import { enrollTrustedDevice } from "../modules/device/device.service.js";
 import { assess } from "../modules/risk/risk.engine.js";
 import { baseCookieOptions } from "../modules/cookie.config.js";
+import { generateRecoveryKey } from "../modules/recovery/recovery.service.js";
 
 const router = express.Router();
 
@@ -72,6 +73,10 @@ router.post("/", (req, res) => {
 
   const device = enrollTrustedDevice({ userId: user.userId, contextSnapshot, credentialId });
 
+  // Generate the recovery key file — the user's ONLY way to manage devices
+  // if all enrolled devices are compromised.
+  const recoveryKey = generateRecoveryKey({ userId: user.userId, email });
+
   // Set the persistent device identity cookie
   res.cookie("device_id", device.deviceId, {
     ...baseCookieOptions,
@@ -79,10 +84,12 @@ router.post("/", (req, res) => {
   });
 
   res.status(201).json({
-    message: "Device enrolled and trusted. You can now log in.",
+    message: "Device enrolled and trusted. Download your recovery key file and store it safely.",
     deviceId: device.deviceId,
     trustState: device.trustState,
     risk,
+    recoveryKey: recoveryKey.content,
+    recoveryFileName: recoveryKey.fileName,
   });
 });
 

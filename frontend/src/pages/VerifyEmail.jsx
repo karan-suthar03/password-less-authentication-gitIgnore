@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { registerCredential } from "../lib/webauthn";
 import { signupConfirmEmail, enrollDevice, login } from "../lib/auth";
+import { downloadRecoveryKey } from "../lib/recovery";
 
 /**
  * /verify-email?token=xxx
@@ -15,9 +16,10 @@ export default function VerifyEmail() {
   const [params] = useSearchParams();
   const token = params.get("token");
 
-  const [step, setStep]       = useState("verifying"); // "verifying" | "webauthn" | "enrolling" | "done" | "error"
+  const [step, setStep]       = useState("verifying"); // "verifying" | "webauthn" | "enrolling" | "recovery" | "done" | "error"
   const [error, setError]     = useState("");
   const [email, setEmail]     = useState("");
+  const [recoveryDownloaded, setRecoveryDownloaded] = useState(false);
 
   // Guard against React StrictMode double-invoking the effect.
   // The magic-link token is single-use, so we must only call the API once.
@@ -57,7 +59,16 @@ export default function VerifyEmail() {
 
         // ── Step 3: enroll the device ─────────────────────────────────
         setStep("enrolling");
-        await enrollDevice({ signupToken, credentialId });
+        const enrollResult = await enrollDevice({ signupToken, credentialId });
+
+        // ── Step 3.5: download recovery key file ─────────────────────
+        if (enrollResult.recoveryKey) {
+          setStep("recovery");
+          downloadRecoveryKey(enrollResult.recoveryKey, enrollResult.recoveryFileName);
+          setRecoveryDownloaded(true);
+          // Wait a moment so the user notices the download
+          await new Promise((r) => setTimeout(r, 2000));
+        }
 
         // ── Step 4: auto-login to get the JWT cookie ──────────────────
         await login(credentialId);
@@ -91,6 +102,16 @@ export default function VerifyEmail() {
 
       {step === "enrolling" && (
         <p className="subtitle">Registering your device…</p>
+      )}
+
+      {step === "recovery" && (
+        <>
+          <p className="subtitle">Email confirmed for <strong>{email}</strong></p>
+          <div className="alert alert-warn">
+            <strong>Recovery key downloaded!</strong> Store this file safely — it is the ONLY way to
+            manage your devices if they are all compromised.
+          </div>
+        </>
       )}
 
       {step === "error" && (

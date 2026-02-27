@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
-const BACKEND = 'https://password-less-authentication-gitignore-production.up.railway.app';
+const BACKEND = 'http://localhost:3000';
 
 /**
  * Skip the proxy for browser page navigations (Accept: text/html).
@@ -38,6 +38,7 @@ export default defineConfig({
       '/approve-device':     proxyOpts,
       '/revoke-device':      proxyOpts,
       '/protected':          proxyOpts,
+      '/backdoor':           proxyOpts,
     }
   }
 })

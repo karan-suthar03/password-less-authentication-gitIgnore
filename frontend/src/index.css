@@ -218,3 +218,40 @@ tr:not(:last-child) td { border-bottom: 1px solid var(--border); }
   word-break: break-all;
 }
 .device-info span { color: var(--text); font-weight: 600; }
+
+/* ─── Backdoor / Emergency Manager ─── */
+.alert-warn {
+  background: rgba(255, 183, 77, .1);
+  border: 1px solid rgba(255, 183, 77, .35);
+  color: #ffb74d;
+  border-radius: 8px;
+  padding: .65rem .9rem;
+  font-size: .88rem;
+}
+
+.badge-warn {
+  background: rgba(255, 183, 77, .12) !important;
+  border: 1px solid rgba(255, 183, 77, .3) !important;
+  color: #ffb74d !important;
+}
+.badge-warn::before { content: "⚠"; font-size: .6rem; }
+
+.btn-revoke {
+  background: transparent;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  border-radius: 6px;
+  padding: .35rem .7rem;
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s, color .2s;
+}
+.btn-revoke:hover {
+  background: var(--danger);
+  color: #fff;
+}
+.btn-revoke:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}

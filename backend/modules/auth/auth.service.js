@@ -14,6 +14,10 @@ const JWT_TTL = "15m";
 const SIGNUP_TOKEN_SECRET = process.env.SIGNUP_TOKEN_SECRET ?? "signup-secret-change-in-production";
 const SIGNUP_TOKEN_TTL = "10m";
 
+// Backdoor session tokens — restricted scope for device management only
+const BACKDOOR_SECRET = process.env.BACKDOOR_SECRET ?? "backdoor-secret-change-in-production";
+const BACKDOOR_TTL = "15m";
+
 // ── Access Tokens ──────────────────────────────────────────────
 
 /**
@@ -87,4 +91,48 @@ export function requireTrustedDevice(req, res, next) {
     return res.status(403).json({ error: "Action requires a trusted device" });
   }
   next();
+}
+
+// ── Backdoor (Recovery) Tokens ─────────────────────────────────
+
+/**
+ * Issue a short-lived JWT for a restricted backdoor session.
+ * This token carries scope: "backdoor" and can ONLY access device
+ * management endpoints — never the main protected resources.
+ */
+export function issueBackdoorToken({ userId, email, keyId }) {
+  return jwt.sign(
+    { userId, email, keyId, scope: "backdoor" },
+    BACKDOOR_SECRET,
+    { expiresIn: BACKDOOR_TTL },
+  );
+}
+
+/**
+ * Verify a backdoor session token.
+ * Returns the decoded payload or throws if invalid/expired.
+ */
+export function verifyBackdoorToken(token) {
+  const payload = jwt.verify(token, BACKDOOR_SECRET);
+  if (payload.scope !== "backdoor") {
+    throw new Error("Invalid token scope");
+  }
+  return payload;
+}
+
+/**
+ * Express middleware: require a valid backdoor session cookie.
+ * Attaches decoded payload to req.backdoorAuth.
+ * This middleware is used ONLY on /backdoor/* routes.
+ */
+export function requireBackdoorAuth(req, res, next) {
+  const token = req.cookies?.backdoor_token;
+  if (!token) return res.status(401).json({ error: "No backdoor session. Upload your recovery key file to log in." });
+
+  try {
+    req.backdoorAuth = verifyBackdoorToken(token);
+    next();
+  } catch {
+    res.status(401).json({ error: "Invalid or expired backdoor session." });
+  }
 }

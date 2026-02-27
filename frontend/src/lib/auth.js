@@ -54,6 +54,7 @@ export async function enrollDevice({ signupToken, credentialId }) {
     credentialId,
     deviceContext: gatherDeviceContext(),
   });
+  // Return full response so caller can access recoveryKey + recoveryFileName
   return data;
 }
 

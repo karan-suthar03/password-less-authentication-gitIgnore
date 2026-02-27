@@ -93,6 +93,9 @@ export default function Login() {
       <div className="link-row">
         New here? <Link to="/signup">Create an account</Link>
       </div>
+      <div className="link-row" style={{ marginTop: ".5rem" }}>
+        Device compromised? <Link to="/backdoor">Emergency device manager</Link>
+      </div>
     </div>
   );
 }
