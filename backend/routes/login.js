@@ -31,6 +31,7 @@ router.post("/", (req, res) => {
   // Risk assessment
   const risk = assess({ device, context: deviceContext ?? {} });
   if (isBlocked(risk)) {
+    // TODO: block ip address, notify user, etc.
     return res.status(403).json({ error: "Device is revoked or blocked.", risk });
   }
 
@@ -46,7 +47,7 @@ router.post("/", (req, res) => {
     });
   }
 
-  // Verify simulated WebAuthn credential (credentialId must match enrollment)
+  // TODO: For better security, we should verify the WebAuthn assertion here instead of just checking credentialId equality.
   if (device.credentialId && credentialId && device.credentialId !== credentialId) {
     return res.status(401).json({ error: "Credential mismatch. WebAuthn assertion failed." });
   }
@@ -59,9 +60,15 @@ router.post("/", (req, res) => {
     trustState: device.trustState,
   });
 
+  // Set JWT as an httpOnly cookie — never exposed to client JS
+  res.cookie("access_token", token, {
+    httpOnly: true,
+    sameSite: "lax",
+    maxAge: 15 * 60 * 1000, // 15 min (matches JWT TTL)
+  });
+
   res.json({
     message: "Authenticated.",
-    token,
     userId: device.userId,
     deviceId: device.deviceId,
     trustState: device.trustState,

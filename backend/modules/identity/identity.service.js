@@ -42,12 +42,4 @@ export function getUserByEmail(email) {
   return userId ? users.get(userId) ?? null : null;
 }
 
-/** Find a user by userId. Returns null if not found. */
-export function getUserById(userId) {
-  return users.get(userId) ?? null;
-}
 
-/** List all users (for admin/debug only). */
-export function listUsers() {
-  return [...users.values()];
-}

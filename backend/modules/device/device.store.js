@@ -21,18 +21,9 @@ export function getDevice(deviceId) {
   return devices.get(deviceId) ?? null;
 }
 
-export function deleteDevice(deviceId) {
-  devices.delete(deviceId);
-}
-
 /** All devices belonging to a specific user */
 export function getDevicesByUser(userId) {
   return [...devices.values()].filter((d) => d.userId === userId);
-}
-
-/** All devices in the store (debug/admin) */
-export function listAllDevices() {
-  return [...devices.values()];
 }
 
 // ── Pending Approval CRUD ─────────────────────────────────────

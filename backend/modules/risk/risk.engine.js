@@ -90,10 +90,4 @@ export function isBlocked(assessment) {
   return assessment.level === "critical";
 }
 
-/**
- * Quick helper: does this attempt require trusted-device confirmation?
- * high risk → must go through approval flow.
- */
-export function requiresApproval(assessment) {
-  return assessment.level === "high" || assessment.level === "critical";
-}
+
