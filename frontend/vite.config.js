@@ -39,6 +39,7 @@ export default defineConfig({
       '/revoke-device':      proxyOpts,
       '/protected':          proxyOpts,
       '/backdoor':           proxyOpts,
+      '/new-device':         proxyOpts,
     }
   }
 })

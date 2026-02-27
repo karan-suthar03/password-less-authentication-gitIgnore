@@ -94,6 +94,9 @@ export default function Login() {
         New here? <Link to="/signup">Create an account</Link>
       </div>
       <div className="link-row" style={{ marginTop: ".5rem" }}>
+        New device? <Link to="/enroll-new-device">Enroll this device</Link>
+      </div>
+      <div className="link-row" style={{ marginTop: ".5rem" }}>
         Device compromised? <Link to="/backdoor">Emergency device manager</Link>
       </div>
     </div>

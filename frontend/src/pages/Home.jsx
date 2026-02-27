@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../lib/api";
 import { fetchProtectedData } from "../lib/data";
+
+const APPROVAL_POLL_MS = 8000;
 
 const DUMMY_TRANSACTIONS = [
   { id: "TXN-001", date: "2026-02-26", description: "Wire Transfer – Contractor", amount: "-$14,500.00", status: "completed" },
@@ -15,7 +17,19 @@ export default function Home() {
   const navigate = useNavigate();
   const [authInfo, setAuthInfo] = useState(null);
   const [error, setError] = useState("");
+  const [pendingApprovals, setPendingApprovals] = useState([]);
+  const [actioning, setActioning] = useState(null); // requestId being acted on
   const email = localStorage.getItem("user_email") ?? "User";
+  const pollRef = useRef(null);
+
+  const fetchApprovals = useCallback(async () => {
+    try {
+      const { data } = await api.get("/new-device/pending-approvals");
+      setPendingApprovals(data.pendingApprovals ?? []);
+    } catch {
+      // silently ignore — user may not be authenticated yet
+    }
+  }, []);
 
   useEffect(() => {
     fetchProtectedData()
@@ -27,7 +41,36 @@ export default function Home() {
         }
         setError(err.response?.data?.error || err.message);
       });
-  }, [navigate]);
+
+    // Start polling for pending device approvals
+    fetchApprovals();
+    pollRef.current = setInterval(fetchApprovals, APPROVAL_POLL_MS);
+    return () => clearInterval(pollRef.current);
+  }, [navigate, fetchApprovals]);
+
+  const handleApprove = async (requestId) => {
+    setActioning(requestId);
+    try {
+      await api.post("/new-device/approve", { requestId });
+      await fetchApprovals();
+    } catch (err) {
+      setError(err.response?.data?.error || err.message);
+    } finally {
+      setActioning(null);
+    }
+  };
+
+  const handleDeny = async (requestId) => {
+    setActioning(requestId);
+    try {
+      await api.post("/new-device/deny", { requestId });
+      await fetchApprovals();
+    } catch (err) {
+      setError(err.response?.data?.error || err.message);
+    } finally {
+      setActioning(null);
+    }
+  };
 
   const logout = async () => {
     try { await api.post("/logout"); } catch { /* ignore */ }
@@ -117,6 +160,52 @@ export default function Home() {
           <div>Device ID: <span>{authInfo.deviceId}</span></div>
           <div>Trust State: <span>{authInfo.trustState}</span></div>
           <div>Server Time: <span>{authInfo.timestamp}</span></div>
+        </div>
+      )}
+
+      {/* Pending Device Approvals */}
+      {pendingApprovals.length > 0 && (
+        <div className="table-card" style={{ marginTop: "1.5rem", borderColor: "rgba(255,183,77,.4)" }}>
+          <div className="table-header" style={{ color: "#ffb74d", display: "flex", alignItems: "center", gap: ".5rem" }}>
+            <span>⚠</span> New Device Approval Requests ({pendingApprovals.length})
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Platform</th>
+                <th>Timezone</th>
+                <th>Requested</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pendingApprovals.map((a) => (
+                <tr key={a.requestId}>
+                  <td>{a.platform}</td>
+                  <td>{a.timezone}</td>
+                  <td style={{ fontSize: ".82rem", color: "var(--muted)" }}>
+                    {new Date(a.createdAt).toLocaleString()}
+                  </td>
+                  <td style={{ display: "flex", gap: ".5rem" }}>
+                    <button
+                      className="btn-approve"
+                      disabled={actioning === a.requestId}
+                      onClick={() => handleApprove(a.requestId)}
+                    >
+                      {actioning === a.requestId ? "…" : "Approve"}
+                    </button>
+                    <button
+                      className="btn-revoke"
+                      disabled={actioning === a.requestId}
+                      onClick={() => handleDeny(a.requestId)}
+                    >
+                      {actioning === a.requestId ? "…" : "Deny"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

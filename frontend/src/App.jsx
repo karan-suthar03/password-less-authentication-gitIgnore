@@ -6,6 +6,7 @@ import VerifyEmail from "./pages/VerifyEmail";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Backdoor from "./pages/Backdoor";
+import EnrollNewDevice from "./pages/EnrollNewDevice";
 
 function PrivateRoute({ children }) {
   const [status, setStatus] = useState("checking"); // "checking" | "ok" | "denied"
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/backdoor" element={<Backdoor />} />
+        <Route path="/enroll-new-device" element={<EnrollNewDevice />} />
         <Route
           path="/home"
           element={

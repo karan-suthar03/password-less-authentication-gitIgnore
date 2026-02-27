@@ -15,6 +15,7 @@ import logoutRoute        from "./routes/logout.js";
 import authCheckRoute     from "./routes/authCheck.js";
 import protectedRoute     from "./routes/protected.js";
 import backdoorRoute      from "./routes/backdoor.js";
+import newDeviceRoute     from "./routes/newDevice.js";
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use("/logout",            logoutRoute);
 app.use("/auth/check",        authCheckRoute);
 app.use("/protected",         protectedRoute);
 app.use("/backdoor",          backdoorRoute);
+app.use("/new-device",        newDeviceRoute);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

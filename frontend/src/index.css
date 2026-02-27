@@ -255,3 +255,52 @@ tr:not(:last-child) td { border-bottom: 1px solid var(--border); }
   opacity: .55;
   cursor: not-allowed;
 }
+
+.btn-approve {
+  background: transparent;
+  border: 1px solid var(--success);
+  color: var(--success);
+  border-radius: 6px;
+  padding: .35rem .7rem;
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s, color .2s;
+}
+.btn-approve:hover {
+  background: var(--success);
+  color: #000;
+}
+.btn-approve:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* ─── Pending pulse animation (new device waiting screen) ─── */
+.pending-pulse {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin: 1.5rem auto 0;
+}
+.pulse-dot {
+  position: absolute;
+  inset: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+.pulse-ring {
+  position: absolute;
+  inset: 0;
+  border: 3px solid var(--accent);
+  border-radius: 50%;
+  animation: pulse-expand 1.6s ease-out infinite;
+  opacity: 0;
+}
+@keyframes pulse-expand {
+  0%   { transform: scale(.4); opacity: .8; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
