@@ -14,8 +14,13 @@ const emailIndex = new Map();  // email   → userId
 /**
  * Create a new user identity.
  * The govIdNumber is hashed; the raw value is never retained.
+ * The account starts in an unauthenticated state:
+ *   - no active sessions
+ *   - no trusted devices
+ *   - emailVerified must already be true before calling this
+ *   - kycVerified must already be true before calling this
  */
-export function createUser({ email, govIdNumber }) {
+export function createUser({ email, govIdNumber, emailVerified, kycVerified }) {
   if (emailIndex.has(email)) {
     throw Object.assign(new Error("Email already registered"), { code: "EMAIL_TAKEN" });
   }
@@ -26,7 +31,9 @@ export function createUser({ email, govIdNumber }) {
   const user = {
     userId,
     email,
-    govIdHash,
+    govIdHash,                       // one-way hash — raw ID never stored
+    emailVerified: !!emailVerified,  // must be true at creation time
+    kycVerified: !!kycVerified,      // must be true at creation time
     createdAt: Date.now(),
   };
 
@@ -36,10 +43,20 @@ export function createUser({ email, govIdNumber }) {
   return user;
 }
 
+/** Check whether an email is already registered. */
+export function isEmailTaken(email) {
+  return emailIndex.has(email);
+}
+
 /** Find a user by email. Returns null if not found. */
 export function getUserByEmail(email) {
   const userId = emailIndex.get(email);
   return userId ? users.get(userId) ?? null : null;
+}
+
+/** Find a user by userId. Returns null if not found. */
+export function getUserById(userId) {
+  return users.get(userId) ?? null;
 }
 
 
