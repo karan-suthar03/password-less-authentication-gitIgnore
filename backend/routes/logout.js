@@ -8,6 +8,7 @@
 import express from "express";
 import { verifyAccessToken } from "../modules/auth/auth.service.js";
 import { clearSession } from "../modules/session/session.store.js";
+import { baseCookieOptions } from "../modules/cookie.config.js";
 
 const router = express.Router();
 
@@ -18,10 +19,7 @@ router.post("/", (req, res) => {
     clearSession({ userId: payload.userId, deviceId: payload.deviceId });
   } catch { /* token may already be expired — that's fine */ }
 
-  res.clearCookie("access_token", {
-    httpOnly: true,
-    sameSite: "lax",
-  });
+  res.clearCookie("access_token", baseCookieOptions);
   res.json({ message: "Logged out." });
 });
 

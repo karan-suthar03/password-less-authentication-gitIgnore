@@ -2,17 +2,42 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
+const BACKEND = 'https://password-less-authentication-gitignore-production.up.railway.app';
+
+/**
+ * Skip the proxy for browser page navigations (Accept: text/html).
+ * Only forward XHR / fetch API calls (Accept: application/json) to the backend.
+ * Returning false  → proxy the request.
+ * Returning a path → let Vite serve it (falls through to index.html via SPA fallback).
+ */
+function bypassHtmlRequests(req) {
+  if (req.headers.accept && req.headers.accept.includes('text/html')) {
+    // Return the original URL so Vite serves the SPA's index.html
+    return req.url;
+  }
+  // undefined → proxy as normal
+}
+
+const proxyOpts = {
+  target: BACKEND,
+  changeOrigin: true,   // sets Host header to the target, required for Railway
+  secure: true,         // verify the backend's TLS certificate
+  bypass: bypassHtmlRequests,
+};
+
 export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/signup':             'http://localhost:3000',
-      '/enroll-device':      'http://localhost:3000',
-      '/login':              'http://localhost:3000',
-      '/request-new-device': 'http://localhost:3000',
-      '/approve-device':     'http://localhost:3000',
-      '/revoke-device':      'http://localhost:3000',
-      '/protected':          'http://localhost:3000',
+      '/signup':             proxyOpts,
+      '/enroll-device':      proxyOpts,
+      '/login':              proxyOpts,
+      '/logout':             proxyOpts,
+      '/auth':               proxyOpts,
+      '/request-new-device': proxyOpts,
+      '/approve-device':     proxyOpts,
+      '/revoke-device':      proxyOpts,
+      '/protected':          proxyOpts,
     }
   }
 })

@@ -20,6 +20,7 @@ import { verifySignupToken } from "../modules/auth/auth.service.js";
 import { createUserFromVerified } from "../modules/identity/identity.service.js";
 import { enrollTrustedDevice } from "../modules/device/device.service.js";
 import { assess } from "../modules/risk/risk.engine.js";
+import { baseCookieOptions } from "../modules/cookie.config.js";
 
 const router = express.Router();
 
@@ -73,8 +74,7 @@ router.post("/", (req, res) => {
 
   // Set the persistent device identity cookie
   res.cookie("device_id", device.deviceId, {
-    httpOnly: true,
-    sameSite: "lax",
+    ...baseCookieOptions,
     maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year
   });
 

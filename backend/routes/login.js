@@ -14,6 +14,7 @@ import { issueAccessToken } from "../modules/auth/auth.service.js";
 import { assess, isBlocked } from "../modules/risk/risk.engine.js";
 import { bindSessionIp } from "../modules/session/session.store.js";
 import { getClientIp } from "../modules/auth/auth.service.js";
+import { baseCookieOptions } from "../modules/cookie.config.js";
 
 const router = express.Router();
 
@@ -69,8 +70,7 @@ router.post("/", (req, res) => {
 
   // Set JWT as an httpOnly cookie — never exposed to client JS
   res.cookie("access_token", token, {
-    httpOnly: true,
-    sameSite: "lax",
+    ...baseCookieOptions,
     maxAge: 15 * 60 * 1000, // 15 min (matches JWT TTL)
   });
 

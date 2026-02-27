@@ -6,6 +6,7 @@
 
 import jwt from "jsonwebtoken";
 import { verifySessionIp, clearSession } from "../session/session.store.js";
+import { baseCookieOptions } from "../cookie.config.js";
 
 const JWT_SECRET = process.env.JWT_SECRET ?? "dev-secret-change-in-production";
 const JWT_TTL = "15m";
@@ -104,7 +105,7 @@ export function requireAuth(req, res, next) {
   if (!match) {
     // Invalidate: clear session store + cookie
     clearSession({ userId: req.auth.userId, deviceId: req.auth.deviceId });
-    res.clearCookie("access_token", { httpOnly: true, sameSite: "lax" });
+    res.clearCookie("access_token", baseCookieOptions);
 
     console.warn(
       `[IP-GUARD] IP changed for user ${req.auth.userId} device ${req.auth.deviceId}: ` +
