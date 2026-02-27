@@ -8,23 +8,37 @@ import { downloadRecoveryKey } from "../lib/recovery";
  * /verify-email?token=xxx
  *
  * Opened when the user clicks the magic link from their email.
- * Automatically confirms the token, then walks through WebAuthn
- * enrollment and auto-login — no manual input required.
+ *
+ * Two-phase flow:
+ *   Phase A (automatic): confirm the magic-link token with the server.
+ *   Phase B (user-gesture): user clicks a button → Windows Hello fires
+ *                           immediately inside that click handler so the
+ *                           browser never sees a stale gesture token.
+ *
+ * navigator.credentials.create() requires a *live* user gesture.
+ * Any async network call before it consumes the gesture window, causing
+ * NotAllowedError.  Splitting the phases fixes this.
  */
 export default function VerifyEmail() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const token = params.get("token");
 
-  const [step, setStep]       = useState("verifying"); // "verifying" | "webauthn" | "enrolling" | "recovery" | "done" | "error"
+  // "verifying" | "ready" | "enrolling" | "recovery" | "done" | "error"
+  const [step, setStep]       = useState("verifying");
   const [error, setError]     = useState("");
   const [email, setEmail]     = useState("");
   const [recoveryDownloaded, setRecoveryDownloaded] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Holds the signupToken returned by phase A so phase B can use it.
+  const signupTokenRef = useRef(null);
 
   // Guard against React StrictMode double-invoking the effect.
   // The magic-link token is single-use, so we must only call the API once.
   const startedRef = useRef(false);
 
+  // ── Phase A: confirm the magic-link token (automatic) ────────────────
   useEffect(() => {
     if (!token) {
       setError("No token found in the URL. Please use the magic link from your email.");
@@ -37,51 +51,64 @@ export default function VerifyEmail() {
 
     (async () => {
       try {
-        // ── Step 1: confirm the magic-link token ──────────────────────
         const { signupToken, email: confirmedEmail } = await signupConfirmEmail(token);
+        signupTokenRef.current = signupToken;
         setEmail(confirmedEmail);
-
-        // ── Step 2: WebAuthn passkey registration (Windows Hello) ─────
-        setStep("webauthn");
-
-        let credentialId;
-        try {
-          credentialId = await registerCredential({ userId: "pending", email: confirmedEmail });
-        } catch (err) {
-          throw new Error(
-            err.name === "NotAllowedError"
-              ? "Windows Hello prompt was dismissed. Please try again."
-              : err.name === "NotSupportedError"
-              ? "Platform authenticator (Windows Hello) is not available on this device."
-              : err.message
-          );
-        }
-
-        // ── Step 3: enroll the device ─────────────────────────────────
-        setStep("enrolling");
-        const enrollResult = await enrollDevice({ signupToken, credentialId });
-
-        // ── Step 3.5: download recovery key file ─────────────────────
-        if (enrollResult.recoveryKey) {
-          setStep("recovery");
-          downloadRecoveryKey(enrollResult.recoveryKey, enrollResult.recoveryFileName);
-          setRecoveryDownloaded(true);
-          // Wait a moment so the user notices the download
-          await new Promise((r) => setTimeout(r, 2000));
-        }
-
-        // ── Step 4: auto-login to get the JWT cookie ──────────────────
-        await login(credentialId);
-
-        localStorage.setItem("user_email", confirmedEmail);
-        setStep("done");
-        navigate("/home");
+        setStep("ready"); // show the "Set up Windows Hello" button
       } catch (err) {
         setError(err.response?.data?.error || err.message);
         setStep("error");
       }
     })();
-  }, [token, navigate]);
+  }, [token]);
+
+  // ── Phase B: WebAuthn + enroll (must be called directly from a click) ─
+  async function handleSetupPasskey() {
+    setLoading(true);
+    setError("");
+
+    // navigator.credentials.create must be called synchronously
+    // (no awaits before it) within a user-gesture handler.
+    let credentialId;
+    try {
+      credentialId = await registerCredential({ userId: "pending", email });
+    } catch (err) {
+      setError(
+        err.name === "NotAllowedError"
+          ? "Windows Hello was cancelled. Please click the button and try again."
+          : err.name === "NotSupportedError"
+          ? "Platform authenticator (Windows Hello) is not available on this device."
+          : err.message
+      );
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setStep("enrolling");
+      const enrollResult = await enrollDevice({
+        signupToken: signupTokenRef.current,
+        credentialId,
+      });
+
+      if (enrollResult.recoveryKey) {
+        setStep("recovery");
+        downloadRecoveryKey(enrollResult.recoveryKey, enrollResult.recoveryFileName);
+        setRecoveryDownloaded(true);
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+
+      await login(credentialId);
+      localStorage.setItem("user_email", email);
+      setStep("done");
+      navigate("/home");
+    } catch (err) {
+      setError(err.response?.data?.error || err.message);
+      setStep("error");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="card">
@@ -91,12 +118,23 @@ export default function VerifyEmail() {
         <p className="subtitle">Confirming your email…</p>
       )}
 
-      {step === "webauthn" && (
+      {step === "ready" && (
         <>
-          <p className="subtitle">Email confirmed for <strong>{email}</strong></p>
           <div className="alert alert-success">
-            Windows Hello is opening — verify with your PIN, fingerprint, or face.
+            Email confirmed for <strong>{email}</strong>.
           </div>
+          <p className="subtitle" style={{ marginTop: "1rem" }}>
+            Click the button below to set up Windows Hello. The prompt will open immediately.
+          </p>
+          {error && <div className="alert alert-error">{error}</div>}
+          <button
+            className="btn-primary"
+            onClick={handleSetupPasskey}
+            disabled={loading}
+            style={{ marginTop: "1rem" }}
+          >
+            {loading ? "Opening Windows Hello…" : "Set up Windows Hello"}
+          </button>
         </>
       )}
 

@@ -1,8 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 
 // https://vite.dev/config/
-const BACKEND = 'http://localhost:3000';
+const BACKEND = 'https://theorem-own-funny-names.trycloudflare.com';
 
 /**
  * Skip the proxy for browser page navigations (Accept: text/html).
@@ -20,14 +21,16 @@ function bypassHtmlRequests(req) {
 
 const proxyOpts = {
   target: BACKEND,
-  changeOrigin: true,   // sets Host header to the target, required for Railway
-  secure: true,         // verify the backend's TLS certificate
+  changeOrigin: true,
+  secure: false, 
   bypass: bypassHtmlRequests,
 };
 
 export default defineConfig({
   plugins: [react()],
   server: {
+    cors: true,
+    allowedHosts: true,
     proxy: {
       '/signup':             proxyOpts,
       '/enroll-device':      proxyOpts,

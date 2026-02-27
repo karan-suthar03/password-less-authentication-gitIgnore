@@ -29,7 +29,6 @@ function base64urlToBuf(str) {
  */
 export async function registerCredential({ userId, email }) {
   const challenge = crypto.getRandomValues(new Uint8Array(32));
-
   const credential = await navigator.credentials.create({
     publicKey: {
       challenge,

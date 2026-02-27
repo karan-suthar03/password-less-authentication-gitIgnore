@@ -4,6 +4,7 @@
  */
 
 import express from "express";
+import https from "https";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
@@ -20,7 +21,7 @@ import newDeviceRoute     from "./routes/newDevice.js";
 const app = express();
 
 app.use(cors({
-  origin: process.env.FRONTEND_ORIGIN ?? "http://localhost:5173",
+  origin: process.env.FRONTEND_ORIGIN ?? "https://patch-alarm-sherman-edges.trycloudflare.com",
   credentials: true,
 }));
 app.use(express.json());
@@ -41,6 +42,12 @@ app.use((err, _req, res, _next) => {
 });
 
 const PORT = process.env.PORT ?? 3000;
-app.listen(PORT,"0.0.0.0", () => {
-  console.log(`Passwordless auth backend → http://localhost:${PORT}`);
+
+// Generate a self-signed TLS certificate for local HTTPS dev.
+// In production this is replaced by the platform's TLS termination.
+
+
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
 });
