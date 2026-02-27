@@ -1,0 +1,40 @@
+:root {
+  --bg:         #07070d;
+  --surface:    #0f0f1a;
+  --surface2:   #161625;
+  --border:     #1e1e30;
+  --text:       #dddde8;
+  --text-dim:   #7070a0;
+  --accent:     #7c6dfa;
+  --accent-glow: rgba(124,109,250,0.22);
+  --success:    #34d399;
+  --warn:       #fbbf24;
+  --error:      #f87171;
+  --radius:     10px;
+  --radius-lg:  16px;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+code {
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 0.82em;
+  background: var(--surface2);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+}
