@@ -5,7 +5,6 @@
  */
 
 import jwt from "jsonwebtoken";
-import { verifySessionIp, clearSession } from "../session/session.store.js";
 import { baseCookieOptions } from "../cookie.config.js";
 
 const JWT_SECRET = process.env.JWT_SECRET ?? "dev-secret-change-in-production";
@@ -61,28 +60,11 @@ export function verifySignupToken(token) {
   return payload;
 }
 
-// ── Helpers ────────────────────────────────────────────────────
-
-/**
- * Extract the real client IP, respecting X-Forwarded-For when behind a proxy.
- */
-export function getClientIp(req) {
-  // req.ip already honours Express "trust proxy" setting.
-  // Normalise IPv6-mapped IPv4 (e.g. ::ffff:127.0.0.1 → 127.0.0.1).
-  const raw = req.ip || req.connection?.remoteAddress || "unknown";
-  return raw.replace(/^::ffff:/, "");
-}
-
 // ── Middleware helper ──────────────────────────────────────────
 
 /**
  * Express middleware: require a valid Bearer JWT.
  * Attaches decoded payload to req.auth.
- *
- * After verifying the JWT, it also checks that the request comes from
- * the same IP address that was recorded at login time.  If the IP has
- * changed the session is invalidated and the client receives a 401 with
- * code "IP_CHANGED" so the frontend can prompt re-authentication.
  */
 export function requireAuth(req, res, next) {
   const token = req.cookies?.access_token;
@@ -90,35 +72,10 @@ export function requireAuth(req, res, next) {
 
   try {
     req.auth = verifyAccessToken(token);
+    next();
   } catch {
-    return res.status(401).json({ error: "Invalid or expired token" });
+    res.status(401).json({ error: "Invalid or expired token" });
   }
-
-  // ── IP continuity check ────────────────────────────────────
-  const currentIp = getClientIp(req);
-  const { match, expected, actual } = verifySessionIp({
-    userId:    req.auth.userId,
-    deviceId:  req.auth.deviceId,
-    currentIp,
-  });
-
-  if (!match) {
-    // Invalidate: clear session store + cookie
-    clearSession({ userId: req.auth.userId, deviceId: req.auth.deviceId });
-    res.clearCookie("access_token", baseCookieOptions);
-
-    console.warn(
-      `[IP-GUARD] IP changed for user ${req.auth.userId} device ${req.auth.deviceId}: ` +
-      `expected ${expected}, got ${actual}. Session invalidated.`,
-    );
-
-    return res.status(401).json({
-      error: "Your IP address has changed. Please re-authenticate.",
-      code:  "IP_CHANGED",
-    });
-  }
-
-  next();
 }
 
 /**

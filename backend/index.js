@@ -17,10 +17,6 @@ import protectedRoute     from "./routes/protected.js";
 
 const app = express();
 
-// Trust the first proxy so req.ip reflects the real client address
-// (important when running behind nginx, a load balancer, etc.)
-app.set("trust proxy", 1);
-
 app.use(cors({
   origin: process.env.FRONTEND_ORIGIN ?? "http://localhost:5173",
   credentials: true,
