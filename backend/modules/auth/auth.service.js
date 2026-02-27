@@ -5,6 +5,7 @@
  */
 
 import jwt from "jsonwebtoken";
+import { verifySessionIp, clearSession } from "../session/session.store.js";
 
 const JWT_SECRET = process.env.JWT_SECRET ?? "dev-secret-change-in-production";
 const JWT_TTL = "15m";
@@ -34,18 +35,22 @@ export function verifyAccessToken(token) {
 // ── Signup Tokens ──────────────────────────────────────────────
 
 /**
- * Issue a single-use enrollment token after successful signup.
- * This token authorises the first device enrollment — nothing else.
+ * Issue a single-use enrollment token after email + KYC verification.
+ * Carries the verified identity (email + govIdHash) so the user can be
+ * created atomically alongside the first device enrollment.
+ * This is NOT an authentication token — it only authorises device enrollment.
  */
-export function issueSignupToken(userId) {
-  return jwt.sign({ userId, purpose: "first-device-enrollment" }, SIGNUP_TOKEN_SECRET, {
-    expiresIn: SIGNUP_TOKEN_TTL,
-  });
+export function issueSignupToken({ email, govIdHash }) {
+  return jwt.sign(
+    { email, govIdHash, purpose: "first-device-enrollment" },
+    SIGNUP_TOKEN_SECRET,
+    { expiresIn: SIGNUP_TOKEN_TTL },
+  );
 }
 
 /**
  * Verify a signup (enrollment) token.
- * Returns { userId } or throws if invalid.
+ * Returns { email, govIdHash } or throws if invalid.
  */
 export function verifySignupToken(token) {
   const payload = jwt.verify(token, SIGNUP_TOKEN_SECRET);
@@ -55,11 +60,28 @@ export function verifySignupToken(token) {
   return payload;
 }
 
+// ── Helpers ────────────────────────────────────────────────────
+
+/**
+ * Extract the real client IP, respecting X-Forwarded-For when behind a proxy.
+ */
+export function getClientIp(req) {
+  // req.ip already honours Express "trust proxy" setting.
+  // Normalise IPv6-mapped IPv4 (e.g. ::ffff:127.0.0.1 → 127.0.0.1).
+  const raw = req.ip || req.connection?.remoteAddress || "unknown";
+  return raw.replace(/^::ffff:/, "");
+}
+
 // ── Middleware helper ──────────────────────────────────────────
 
 /**
  * Express middleware: require a valid Bearer JWT.
  * Attaches decoded payload to req.auth.
+ *
+ * After verifying the JWT, it also checks that the request comes from
+ * the same IP address that was recorded at login time.  If the IP has
+ * changed the session is invalidated and the client receives a 401 with
+ * code "IP_CHANGED" so the frontend can prompt re-authentication.
  */
 export function requireAuth(req, res, next) {
   const token = req.cookies?.access_token;
@@ -67,10 +89,35 @@ export function requireAuth(req, res, next) {
 
   try {
     req.auth = verifyAccessToken(token);
-    next();
   } catch {
-    res.status(401).json({ error: "Invalid or expired token" });
+    return res.status(401).json({ error: "Invalid or expired token" });
   }
+
+  // ── IP continuity check ────────────────────────────────────
+  const currentIp = getClientIp(req);
+  const { match, expected, actual } = verifySessionIp({
+    userId:    req.auth.userId,
+    deviceId:  req.auth.deviceId,
+    currentIp,
+  });
+
+  if (!match) {
+    // Invalidate: clear session store + cookie
+    clearSession({ userId: req.auth.userId, deviceId: req.auth.deviceId });
+    res.clearCookie("access_token", { httpOnly: true, sameSite: "lax" });
+
+    console.warn(
+      `[IP-GUARD] IP changed for user ${req.auth.userId} device ${req.auth.deviceId}: ` +
+      `expected ${expected}, got ${actual}. Session invalidated.`,
+    );
+
+    return res.status(401).json({
+      error: "Your IP address has changed. Please re-authenticate.",
+      code:  "IP_CHANGED",
+    });
+  }
+
+  next();
 }
 
 /**

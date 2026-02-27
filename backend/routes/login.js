@@ -12,6 +12,8 @@ import express from "express";
 import { getDevice, touchDevice } from "../modules/device/device.service.js";
 import { issueAccessToken } from "../modules/auth/auth.service.js";
 import { assess, isBlocked } from "../modules/risk/risk.engine.js";
+import { bindSessionIp } from "../modules/session/session.store.js";
+import { getClientIp } from "../modules/auth/auth.service.js";
 
 const router = express.Router();
 
@@ -53,6 +55,11 @@ router.post("/", (req, res) => {
   }
 
   touchDevice(deviceId);
+
+  // Bind this session to the client's current IP address.
+  // Any future request from a different IP will invalidate the session.
+  const clientIp = getClientIp(req);
+  bindSessionIp({ userId: device.userId, deviceId: device.deviceId, ip: clientIp });
 
   const token = issueAccessToken({
     userId: device.userId,

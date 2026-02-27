@@ -16,7 +16,8 @@
  */
 
 import express from "express";
-import { createUser, isEmailTaken } from "../modules/identity/identity.service.js";
+import { createHash } from "crypto";
+import { isEmailTaken } from "../modules/identity/identity.service.js";
 import { issueSignupToken } from "../modules/auth/auth.service.js";
 import { verifyIdentityDocument } from "../modules/kyc/kyc.service.js";
 import {
@@ -57,7 +58,7 @@ router.post("/", (req, res) => {
   });
 });
 
-// ── Phase 2: Confirm magic link → create user → issue signupToken
+// ── Phase 2: Confirm magic link → issue signupToken (NO user created yet)
 
 router.post("/confirm-email", (req, res) => {
   const { token } = req.body ?? {};
@@ -74,31 +75,25 @@ router.post("/confirm-email", (req, res) => {
   const { email, payload } = result;
   const { govIdNumber } = payload;
 
-  try {
-    const user = createUser({
-      email,
-      govIdNumber,
-      emailVerified: true,
-      kycVerified: true,
-    });
-
-    // Issue a short-lived token authorising ONLY first-device enrollment.
-    // This is NOT an authentication token.
-    const signupToken = issueSignupToken(user.userId);
-
-    res.status(201).json({
-      message:
-        "Identity verified and email confirmed. Enroll your first device to continue.",
-      userId: user.userId,
-      email,
-      signupToken, // expires in 10 min — use it for /enroll-device
-    });
-  } catch (err) {
-    if (err.code === "EMAIL_TAKEN") {
-      return res.status(409).json({ error: "Email already registered." });
-    }
-    throw err;
+  // Pre-check: reject if email was registered between Phase 1 and now
+  if (isEmailTaken(email)) {
+    return res.status(409).json({ error: "Email already registered." });
   }
+
+  // Hash the govIdNumber now — the raw value is never stored or carried further.
+  const govIdHash = createHash("sha256").update(govIdNumber).digest("hex");
+
+  // Issue a short-lived token carrying the verified identity.
+  // The user account is NOT created here — it will be created atomically
+  // alongside the first device enrollment in POST /enroll-device.
+  const signupToken = issueSignupToken({ email, govIdHash });
+
+  res.status(200).json({
+    message:
+      "Identity verified and email confirmed. Enroll your first device to continue.",
+    email,
+    signupToken, // expires in 10 min — use it for /enroll-device
+  });
 });
 
 export default router;

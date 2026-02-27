@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { authenticateCredential } from "../lib/webauthn";
 import { login } from "../lib/auth";
@@ -8,9 +8,19 @@ export default function Login() {
   const [error, setError]     = useState("");
   const [loading, setLoading] = useState(false);
   const [step, setStep]       = useState("idle"); // "idle" | "webauthn"
+  const [ipChanged, setIpChanged] = useState(false);
 
   const email        = localStorage.getItem("user_email") ?? "";
   const credentialId = localStorage.getItem("credential_id");
+
+  // Check if we were redirected here because the IP address changed
+  useEffect(() => {
+    if (sessionStorage.getItem("ip_changed") === "1") {
+      sessionStorage.removeItem("ip_changed");
+      setIpChanged(true);
+      setError("Your IP address changed during the session. Please verify your identity again.");
+    }
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -62,6 +72,12 @@ export default function Login() {
       </p>
 
       {error && <div className="alert alert-error">{error}</div>}
+
+      {ipChanged && !error && (
+        <div className="alert alert-error">
+          Session invalidated — your network address changed. Verify with Windows Hello to continue.
+        </div>
+      )}
 
       {step === "webauthn" && (
         <div className="alert alert-success">

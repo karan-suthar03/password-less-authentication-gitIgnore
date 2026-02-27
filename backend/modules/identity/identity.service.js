@@ -48,6 +48,33 @@ export function isEmailTaken(email) {
   return emailIndex.has(email);
 }
 
+/**
+ * Create a user from already-verified identity data.
+ * Called during device enrollment — the govIdHash is already computed,
+ * KYC and email are already confirmed.
+ */
+export function createUserFromVerified({ email, govIdHash }) {
+  if (emailIndex.has(email)) {
+    throw Object.assign(new Error("Email already registered"), { code: "EMAIL_TAKEN" });
+  }
+
+  const userId = uuid();
+
+  const user = {
+    userId,
+    email,
+    govIdHash,
+    emailVerified: true,
+    kycVerified: true,
+    createdAt: Date.now(),
+  };
+
+  users.set(userId, user);
+  emailIndex.set(email, userId);
+
+  return user;
+}
+
 /** Find a user by email. Returns null if not found. */
 export function getUserByEmail(email) {
   const userId = emailIndex.get(email);
