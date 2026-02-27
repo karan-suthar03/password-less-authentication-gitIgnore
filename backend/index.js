@@ -43,11 +43,6 @@ app.use((err, _req, res, _next) => {
 
 const PORT = process.env.PORT ?? 3000;
 
-// Generate a self-signed TLS certificate for local HTTPS dev.
-// In production this is replaced by the platform's TLS termination.
-
-
-
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
