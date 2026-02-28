@@ -1,18 +1,7 @@
-/**
- * device.service.js
- * Framework module — all Device lifecycle logic.
- * Trust model: trusted | pending | revoked
- */
 
 import { v4 as uuid } from "uuid";
 import * as store from "./device.store.js";
 
-// ── Enrollment ─────────────────────────────────────────────────
-
-/**
- * Enroll a new device as TRUSTED (first device / bootstrap).
- * Called after successful identity verification.
- */
 export function enrollTrustedDevice({ userId, contextSnapshot, credentialId }) {
   const device = {
     deviceId: uuid(),
@@ -26,10 +15,6 @@ export function enrollTrustedDevice({ userId, contextSnapshot, credentialId }) {
   return store.saveDevice(device);
 }
 
-/**
- * Create a PENDING device record for a new, unverified device.
- * Trust must be granted by an existing trusted device before login succeeds.
- */
 export function createPendingDevice({ userId, contextSnapshot, credentialId }) {
   const device = {
     deviceId: uuid(),
@@ -43,12 +28,6 @@ export function createPendingDevice({ userId, contextSnapshot, credentialId }) {
   return store.saveDevice(device);
 }
 
-// ── Approval flow ──────────────────────────────────────────────
-
-/**
- * Create a pending approval request for a new device.
- * Returns a requestId that the new device can poll or the trusted device can approve.
- */
 export function createPendingApproval({ userId, newDeviceId, newDeviceContext }) {
   const approval = {
     requestId: uuid(),
@@ -60,10 +39,6 @@ export function createPendingApproval({ userId, newDeviceId, newDeviceContext })
   return store.savePendingApproval(approval);
 }
 
-/**
- * Approve a pending device from a trusted device.
- * Upgrades trustState from "pending" → "trusted".
- */
 export function approveDevice(requestId) {
   const approval = store.getPendingApproval(requestId);
   if (!approval) {
@@ -85,7 +60,7 @@ export function approveDevice(requestId) {
   return device;
 }
 
-// ── Revocation ─────────────────────────────────────────────────
+
 
 export function revokeDevice(deviceId) {
   const device = store.getDevice(deviceId);
@@ -97,7 +72,7 @@ export function revokeDevice(deviceId) {
   return device;
 }
 
-// ── Lookup ─────────────────────────────────────────────────────
+
 
 export function getDevice(deviceId) {
   return store.getDevice(deviceId);
@@ -115,7 +90,6 @@ export function getPendingApprovalsByUser(userId) {
   return store.getPendingApprovalsByUser(userId);
 }
 
-/** Update lastSeen timestamp. */
 export function touchDevice(deviceId) {
   const device = store.getDevice(deviceId);
   if (device) {

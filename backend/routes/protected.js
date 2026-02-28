@@ -1,12 +1,3 @@
-/**
- * routes/protected.js
- * GET /protected
- *
- * Example protected resource.
- * Requires a valid Bearer JWT with trustState === "trusted".
- * Revoked devices are blocked even if they somehow have a valid JWT.
- */
-
 import express from "express";
 import { requireAuth, requireTrustedDevice } from "../modules/auth/auth.service.js";
 import { getDevice } from "../modules/device/device.service.js";
@@ -14,7 +5,6 @@ import { getDevice } from "../modules/device/device.service.js";
 const router = express.Router();
 
 router.get("/", requireAuth, requireTrustedDevice, (req, res) => {
-  // Re-check live device state (JWT alone is not enough if device was revoked after issuance)
   const device = getDevice(req.auth.deviceId);
   if (!device || device.trustState === "revoked") {
     return res.status(403).json({ error: "Device has been revoked." });

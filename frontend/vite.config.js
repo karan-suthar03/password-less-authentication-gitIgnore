@@ -2,21 +2,12 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 
-// https://vite.dev/config/
-const BACKEND = 'https://theorem-own-funny-names.trycloudflare.com';
+const BACKEND = 'http://localhost:3001';
 
-/**
- * Skip the proxy for browser page navigations (Accept: text/html).
- * Only forward XHR / fetch API calls (Accept: application/json) to the backend.
- * Returning false  → proxy the request.
- * Returning a path → let Vite serve it (falls through to index.html via SPA fallback).
- */
 function bypassHtmlRequests(req) {
   if (req.headers.accept && req.headers.accept.includes('text/html')) {
-    // Return the original URL so Vite serves the SPA's index.html
     return req.url;
   }
-  // undefined → proxy as normal
 }
 
 const proxyOpts = {

@@ -9,7 +9,7 @@ import Backdoor from "./pages/Backdoor";
 import EnrollNewDevice from "./pages/EnrollNewDevice";
 
 function PrivateRoute({ children }) {
-  const [status, setStatus] = useState("checking"); // "checking" | "ok" | "denied"
+  const [status, setStatus] = useState("checking");
 
   useEffect(() => {
     api.get("/auth/check")

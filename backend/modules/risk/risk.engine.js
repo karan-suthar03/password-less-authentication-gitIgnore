@@ -1,17 +1,3 @@
-/**
- * risk.engine.js
- * Framework module — rule-based risk assessment.
- * Returns a risk level: "low" | "medium" | "high" | "critical"
- * and a list of triggered rule names for transparency.
- *
- * Compares current login context against the baseline snapshot
- * captured during device enrollment.
- *
- * No ML required. Pure deterministic rules.
- */
-
-// ── Rule definitions ───────────────────────────────────────────
-
 const RULES = [
   {
     name: "new_device",
@@ -63,16 +49,10 @@ const RULES = [
   },
 ];
 
-// ── Level ordering ─────────────────────────────────────────────
+
 
 const LEVEL_RANK = { low: 1, medium: 2, high: 3, critical: 4 };
 
-/**
- * Assess the risk of an authentication attempt.
- *
- * @param {{ device: object|null, context: object }} param0
- * @returns {{ level: string, score: number, triggered: string[] }}
- */
 export function assess({ device, context = {} }) {
   const triggered = [];
   let maxRank = 0;
@@ -94,10 +74,6 @@ export function assess({ device, context = {} }) {
   return { level, score: maxRank, triggered };
 }
 
-/**
- * Quick helper: is this attempt blocked?
- * Critical risk or revoked device → deny.
- */
 export function isBlocked(assessment) {
   return assessment.level === "critical";
 }

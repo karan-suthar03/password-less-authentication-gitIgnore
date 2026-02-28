@@ -1,14 +1,8 @@
-/**
- * index.js — Passwordless Auth Framework
- * Modular Express server. No app-specific logic here.
- */
-
 import express from "express";
 import https from "https";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
-// Routes
 import signupRoute        from "./routes/signup.js";
 import enrollDeviceRoute  from "./routes/enrollDevice.js";
 import loginRoute         from "./routes/login.js";

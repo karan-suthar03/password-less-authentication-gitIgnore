@@ -4,19 +4,6 @@ import { registerCredential } from "../lib/webauthn";
 import { login } from "../lib/auth";
 import api from "../lib/api";
 
-/**
- * /enroll-new-device
- *
- * Lets an existing user log in from a brand-new device.
- *
- * Step 1 — "register":  User enters email → Windows Hello registers passkey
- *                        → POST /new-device/request → device is now "pending"
- * Step 2 — "waiting":   Poll GET /new-device/status every 3 s.
- *                        The trusted device must approve from its Home page.
- * Step 3 — "approved":  TrustState flipped to "trusted" → auto-login →
- *                        navigate to /home.
- */
-
 function gatherDeviceContext() {
   return {
     userAgent:    navigator.userAgent,
@@ -32,7 +19,7 @@ const POLL_INTERVAL_MS = 3000;
 export default function EnrollNewDevice() {
   const navigate = useNavigate();
 
-  const [step, setStep]     = useState("register"); // "register" | "webauthn" | "waiting" | "approved" | "denied" | "error"
+  const [step, setStep]     = useState("register");
   const [email, setEmail]   = useState("");
   const [error, setError]   = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,10 +27,8 @@ export default function EnrollNewDevice() {
 
   const pollRef = useRef(null);
 
-  // ── Clean up polling on unmount ──────────────────────────────
   useEffect(() => () => clearInterval(pollRef.current), []);
 
-  // ── Step 1 → 2: Register passkey + request enrollment ────────
   const handleRequest = async (e) => {
     e.preventDefault();
     setError("");
@@ -55,7 +40,6 @@ export default function EnrollNewDevice() {
 
     setLoading(true);
 
-    // Register a new passkey for this device via Windows Hello
     setStep("webauthn");
     let cred;
     try {
@@ -74,7 +58,6 @@ export default function EnrollNewDevice() {
       return;
     }
 
-    // Send the request to the backend
     try {
       await api.post("/new-device/request", {
         email: email.trim(),
@@ -91,7 +74,6 @@ export default function EnrollNewDevice() {
     }
   };
 
-  // ── Polling: check trust state every 3 s ─────────────────────
   const startPolling = (cred) => {
     pollRef.current = setInterval(async () => {
       try {
@@ -101,7 +83,6 @@ export default function EnrollNewDevice() {
           clearInterval(pollRef.current);
           setStep("approved");
 
-          // Auto-login: get JWT cookie then navigate home
           try {
             await login(cred ?? credentialId);
             navigate("/home");
@@ -113,18 +94,14 @@ export default function EnrollNewDevice() {
           clearInterval(pollRef.current);
           setStep("denied");
         }
-      } catch {
-        // Ignore transient network errors during polling
-      }
+      } catch {}
     }, POLL_INTERVAL_MS);
   };
 
-  // ── Render ───────────────────────────────────────────────────
   return (
     <div className="card">
       <h1>New Device Login</h1>
 
-      {/* ── Step : register ── */}
       {(step === "register" || step === "webauthn") && (
         <>
           <p className="subtitle">
@@ -158,7 +135,6 @@ export default function EnrollNewDevice() {
         </>
       )}
 
-      {/* ── Step : waiting ── */}
       {step === "waiting" && (
         <>
           <p className="subtitle">Almost there, <strong>{email}</strong></p>
@@ -180,7 +156,6 @@ export default function EnrollNewDevice() {
         </>
       )}
 
-      {/* ── Step : approved ── */}
       {step === "approved" && (
         <>
           <div className="alert alert-success">
@@ -189,7 +164,6 @@ export default function EnrollNewDevice() {
         </>
       )}
 
-      {/* ── Step : denied ── */}
       {step === "denied" && (
         <>
           <div className="alert alert-error">
@@ -205,7 +179,6 @@ export default function EnrollNewDevice() {
         </>
       )}
 
-      {/* ── Step : error ── */}
       {step === "error" && error && (
         <>
           <div className="alert alert-error">{error}</div>

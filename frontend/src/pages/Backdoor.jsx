@@ -2,23 +2,14 @@ import { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import api from "../lib/api";
 
-/**
- * /backdoor
- *
- * Emergency-only page for device management via a recovery key file.
- * The user uploads their recovery-key JSON file (downloaded during signup).
- * On successful verification they get a restricted session to list and
- * blocklist enrolled devices.  No other access is granted.
- */
 export default function Backdoor() {
   const [phase, setPhase]       = useState("upload");   // "upload" | "devices"
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
   const [email, setEmail]       = useState("");
   const [devices, setDevices]   = useState([]);
-  const [revoking, setRevoking] = useState(null);       // deviceId being revoked
+  const [revoking, setRevoking] = useState(null);
 
-  // ── File upload handler ──────────────────────────────────────
   const handleFileUpload = useCallback(async (e) => {
     e.preventDefault();
     setError("");
@@ -51,11 +42,9 @@ export default function Backdoor() {
         throw new Error("This file does not appear to be a valid recovery key.");
       }
 
-      // Send the token to the backdoor login endpoint
       const { data } = await api.post("/backdoor/login", { token: parsed.token });
       setEmail(data.email);
 
-      // Immediately fetch the device list
       await refreshDevices();
       setPhase("devices");
     } catch (err) {
@@ -65,13 +54,13 @@ export default function Backdoor() {
     }
   }, []);
 
-  // ── Fetch device list ────────────────────────────────────────
+
   const refreshDevices = async () => {
     const { data } = await api.get("/backdoor/devices");
     setDevices(data.devices);
   };
 
-  // ── Revoke a device ──────────────────────────────────────────
+
   const handleRevoke = async (deviceId) => {
     setError("");
     setRevoking(deviceId);
@@ -86,16 +75,16 @@ export default function Backdoor() {
     }
   };
 
-  // ── Logout ───────────────────────────────────────────────────
+
   const handleLogout = async () => {
-    try { await api.post("/backdoor/logout"); } catch { /* ignore */ }
+    try { await api.post("/backdoor/logout"); } catch { }
     setPhase("upload");
     setDevices([]);
     setEmail("");
     setError("");
   };
 
-  // ── Upload phase ─────────────────────────────────────────────
+
   if (phase === "upload") {
     return (
       <div className="card">
@@ -139,10 +128,8 @@ export default function Backdoor() {
     );
   }
 
-  // ── Device management phase ──────────────────────────────────
   return (
     <div className="home-wrapper">
-      {/* Header */}
       <div className="home-header">
         <div>
           <h1>Device Manager</h1>

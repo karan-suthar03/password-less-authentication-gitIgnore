@@ -4,7 +4,7 @@ import { signupPhase1 } from "../lib/auth";
 
 export default function Signup() {
   const [form, setForm]       = useState({ email: "", govIdNumber: "" });
-  const [step, setStep]       = useState("form"); // "form" | "check-email"
+  const [step, setStep]       = useState("form");
   const [error, setError]     = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -35,7 +35,7 @@ export default function Signup() {
 
       {error && <div className="alert alert-error">{error}</div>}
 
-      {/* ── Phase 1: Identity form ──────────────────────────────── */}
+
       {step === "form" && (
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -73,7 +73,7 @@ export default function Signup() {
         </form>
       )}
 
-      {/* ── Waiting for magic link ───────────────────────────────── */}
+
       {step === "check-email" && (
         <div style={{ textAlign: "center" }}>
           <div className="alert alert-success">

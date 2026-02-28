@@ -7,7 +7,7 @@ export default function Login() {
   const navigate  = useNavigate();
   const [error, setError]     = useState("");
   const [loading, setLoading] = useState(false);
-  const [step, setStep]       = useState("idle"); // "idle" | "webauthn"
+  const [step, setStep]       = useState("idle");
 
   const email        = localStorage.getItem("user_email") ?? "";
   const credentialId = localStorage.getItem("credential_id");
@@ -21,7 +21,6 @@ export default function Login() {
       return;
     }
 
-    // ── Step 1: Windows Hello biometric challenge ──────────────────────
     setStep("webauthn");
     setLoading(true);
 
@@ -41,7 +40,6 @@ export default function Login() {
       return;
     }
 
-    // ── Step 2: Send verified credential to backend ────────────────────
     try {
       const data = await login(verifiedCredentialId);
 

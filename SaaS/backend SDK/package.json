@@ -1,0 +1,25 @@
+{
+  "name": "passkey-saas-sdk",
+  "version": "1.0.0",
+  "description": "Backend Node.js SDK for the PassKey SaaS passwordless authentication API",
+  "main": "index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./index.cjs"
+    }
+  },
+  "scripts": {
+    "example": "node examples/node.js"
+  },
+  "keywords": ["passwordless", "authentication", "otp", "passkey", "sdk", "backend", "nodejs"],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.7.0"
+  }
+}
