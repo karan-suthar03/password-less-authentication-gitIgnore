@@ -7,15 +7,14 @@ const POLL_INTERVAL_MS = 3000;
 export default function EnrollNewDevice() {
   const navigate = useNavigate();
 
-  const [step, setStep]     = useState("register");
-  const [email, setEmail]   = useState("");
-  const [error, setError]   = useState("");
+  const [step, setStep]       = useState("register");
+  const [email, setEmail]     = useState("");
+  const [error, setError]     = useState("");
   const [loading, setLoading] = useState(false);
 
   const pollRef = useRef(null);
 
   useEffect(() => () => clearInterval(pollRef.current), []);
-
 
   const handleRequest = async (e) => {
     e.preventDefault();
@@ -47,7 +46,6 @@ export default function EnrollNewDevice() {
     }
   };
 
-
   const startPolling = () => {
     pollRef.current = setInterval(async () => {
       try {
@@ -74,72 +72,101 @@ export default function EnrollNewDevice() {
 
   return (
     <div className="card">
-      <h1>Enroll New Device</h1>
+      <h1>New Device Login</h1>
 
-
-      {step === "register" && (
+      {(step === "register" || step === "webauthn") && (
         <>
           <p className="subtitle">
-            Enroll this device for an existing account. A trusted device must approve the request.
+            Register this device with your account. A trusted device will need to approve it.
           </p>
+
           {error && <div className="alert alert-error">{error}</div>}
+
+          {step === "webauthn" && (
+            <div className="alert alert-success">
+              Windows Hello is opening — verify with your PIN, fingerprint, or face.
+            </div>
+          )}
+
           <form onSubmit={handleRequest}>
             <div className="form-group">
               <label>Email</label>
               <input
-                type="email" placeholder="you@example.com"
-                value={email} onChange={(e) => setEmail(e.target.value)}
-                required autoFocus disabled={loading}
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={step === "webauthn"}
+                autoFocus
               />
             </div>
-            <button className="btn-primary" type="submit" disabled={loading}>
-              Register this device
+            <button className="btn-primary" type="submit" disabled={loading || step === "webauthn"}>
+              {step === "webauthn" ? "Waiting for Windows Hello\u2026" : "Register this device"}
             </button>
           </form>
         </>
       )}
 
-
-      {step === "webauthn" && (
-        <div className="alert alert-info">
-          <span className="spinner" />
-          Windows Hello is registering this device…
-        </div>
-      )}
-
-
       {step === "waiting" && (
-        <div style={{ textAlign: "center" }}>
-          <div className="alert alert-warning">
-            <span className="spinner" />
-            Waiting for a trusted device to approve this request…
+        <>
+          <p className="subtitle">Almost there, <strong>{email}</strong></p>
+
+          <div className="alert-warn" style={{ marginBottom: "1.25rem" }}>
+            <strong>Approval required.</strong> Open your trusted device and approve this
+            request from the dashboard.
           </div>
-          <p style={{ fontSize: ".8rem", color: "var(--muted)", marginTop: ".75rem" }}>
-            Open the Home page on one of your trusted devices and approve this request.
+
+          <div className="pending-pulse">
+            <div className="pulse-ring" />
+            <div className="pulse-dot" />
+          </div>
+          <p style={{ textAlign: "center", color: "var(--muted)", fontSize: ".85rem", marginTop: "1rem" }}>
+            Waiting for approval…
           </p>
-        </div>
+
+          {error && <div className="alert alert-error" style={{ marginTop: "1rem" }}>{error}</div>}
+        </>
       )}
 
+      {step === "approved" && (
+        <>
+          <div className="alert alert-success">
+            Device approved! Logging you in…
+          </div>
+        </>
+      )}
 
       {step === "denied" && (
         <>
           <div className="alert alert-error">
-            This device request was denied. Please contact support if this was unexpected.
+            Your request was denied by the trusted device.
           </div>
-          <div className="link-row"><Link to="/login">Back to Login</Link></div>
+          <button
+            className="btn-primary"
+            style={{ marginTop: "1rem" }}
+            onClick={() => { setStep("register"); setError(""); }}
+          >
+            Try again
+          </button>
         </>
       )}
 
-
-      {step === "error" && (
+      {step === "error" && error && (
         <>
           <div className="alert alert-error">{error}</div>
-          <div className="link-row"><Link to="/login">Back to Login</Link></div>
+          <button
+            className="btn-primary"
+            style={{ marginTop: "1rem" }}
+            onClick={() => { setStep("register"); setError(""); }}
+          >
+            Try again
+          </button>
         </>
       )}
 
-      <hr className="divider" />
-      <div className="link-row"><Link to="/login">← Back to Login</Link></div>
+      <div className="link-row" style={{ marginTop: "1.25rem" }}>
+        <Link to="/login">← Back to login</Link>
+      </div>
     </div>
   );
 }

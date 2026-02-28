@@ -87,6 +87,7 @@ router.post("/confirm-email", async (req, res) => {
     return res.status(200).json({
       message:     "Identity verified and email confirmed. Enroll your first device to continue.",
       email,
+      userId,
       signupToken,
     });
 

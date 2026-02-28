@@ -7,18 +7,17 @@ export default function VerifyEmail() {
   const [params] = useSearchParams();
   const token = params.get("token");
 
-  const [step, setStep]     = useState("verifying");
-  const [error, setError]   = useState("");
+  const [step, setStep]       = useState("verifying");
+  const [error, setError]     = useState("");
   const [loading, setLoading] = useState(false);
   const [recoveryDownloaded, setRecoveryDownloaded] = useState(false);
 
   const enrollDataRef = useRef(null);
-
-  const startedRef = useRef(false);
+  const startedRef    = useRef(false);
 
   useEffect(() => {
     if (!token) {
-      setError("No token in URL. Use the magic link from your email.");
+      setError("No token found in the URL. Please use the magic link from your email.");
       setStep("error");
       return;
     }
@@ -38,7 +37,6 @@ export default function VerifyEmail() {
     })();
   }, [token]);
 
-
   const handleSetupPasskey = async () => {
     setLoading(true);
     setError("");
@@ -52,9 +50,9 @@ export default function VerifyEmail() {
       setLoading(false);
       setError(
         err.name === "NotAllowedError"
-          ? "Windows Hello was cancelled. Click the button again to retry."
+          ? "Windows Hello was cancelled. Please click the button and try again."
           : err.name === "NotSupportedError"
-          ? "Platform authenticator (Windows Hello / Touch ID) is not available on this device."
+          ? "Platform authenticator (Windows Hello) is not available on this device."
           : err.message,
       );
       return;
@@ -62,68 +60,62 @@ export default function VerifyEmail() {
 
     setLoading(false);
     setStep("recovery");
-
     pb.downloadRecoveryKey(data.recoveryKey, data.recoveryFileName);
+    setRecoveryDownloaded(true);
   };
 
   const handleContinue = () => navigate("/home");
 
   return (
     <div className="card">
-      <h1>Verify Email</h1>
-
+      <h1>Email Verification</h1>
 
       {step === "verifying" && (
-        <div className="alert alert-info">
-          <span className="spinner" />Verifying your magic link…
-        </div>
-      )}
-
-
-      {step === "error" && (
-        <>
-          <div className="alert alert-error">{error}</div>
-          <div className="link-row"><Link to="/signup">Start over</Link></div>
-        </>
+        <p className="subtitle">Confirming your email…</p>
       )}
 
       {step === "ready" && (
         <>
-          <p className="subtitle">
-            Email confirmed. Now set up your passkey — the OS biometric prompt will open.
+          <div className="alert alert-success">
+            Email confirmed for <strong>{enrollDataRef.current?.email}</strong>.
+          </div>
+          <p className="subtitle" style={{ marginTop: "1rem" }}>
+            Click the button below to set up Windows Hello. The prompt will open immediately.
           </p>
           {error && <div className="alert alert-error">{error}</div>}
-          <button className="btn-primary" onClick={handleSetupPasskey} disabled={loading}>
-            {loading
-              ? <><span className="spinner" />Waiting for Windows Hello…</>
-              : "Set up Windows Hello / Touch ID"}
+          <button
+            className="btn-primary"
+            onClick={handleSetupPasskey}
+            disabled={loading}
+            style={{ marginTop: "1rem" }}
+          >
+            {loading ? "Opening Windows Hello\u2026" : "Set up Windows Hello"}
           </button>
-          <p style={{ fontSize: ".75rem", color: "var(--muted)", marginTop: ".75rem", textAlign: "center" }}>
-            Your biometric data never leaves this device.
-          </p>
         </>
       )}
 
-
       {step === "recovery" && (
         <>
-          <div className="alert alert-warning">
-            <strong>Save your recovery key!</strong><br />
-            A JSON file is downloading now. Store it safely — it's your only way to
-            recover access if you lose all enrolled devices.
+          <div className="alert-warn">
+            <strong>Recovery key downloaded!</strong> Store this file safely — it is the ONLY way to
+            manage your devices if they are all compromised.
           </div>
-          <label style={{ display: "flex", alignItems: "center", gap: ".5rem", fontSize: ".85rem", cursor: "pointer", margin: ".75rem 0" }}>
-            <input
-              type="checkbox"
-              checked={recoveryDownloaded}
-              onChange={(e) => setRecoveryDownloaded(e.target.checked)}
-              style={{ width: "auto" }}
-            />
-            I have saved my recovery key file
-          </label>
-          <button className="btn-primary" onClick={handleContinue} disabled={!recoveryDownloaded}>
+          <button
+            className="btn-primary"
+            onClick={handleContinue}
+            style={{ marginTop: "1rem" }}
+          >
             Continue to Home
           </button>
+        </>
+      )}
+
+      {step === "error" && (
+        <>
+          <div className="alert alert-error">{error}</div>
+          <div className="link-row" style={{ marginTop: "1rem" }}>
+            <Link to="/signup">Back to sign up</Link>
+          </div>
         </>
       )}
     </div>
