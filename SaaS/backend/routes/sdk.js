@@ -2,6 +2,7 @@ import { Router } from "express";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { validateApiKey } from "../middleware/apiKey.js";
+import { sendMagicLinkEmail } from "../modules/email.service.js";
 
 const router = Router();
 
@@ -74,8 +75,8 @@ router.post("/auth/register", (req, res) => {
   });
 });
 
-router.post("/auth/login", (req, res) => {
-  const { email } = req.body;
+router.post("/auth/login", async (req, res) => {
+  const { email, callbackUrl } = req.body;
   const keyId = req.apiKey.id;
 
   if (!email) return res.status(400).json({ error: "email is required" });
@@ -93,8 +94,19 @@ router.post("/auth/login", (req, res) => {
     expiresAt: Date.now() + 10 * 60 * 1000,
   });
 
+  // Build magic link & send the email
+  const base = callbackUrl || `${process.env.APP_URL || "http://localhost:3000"}/verify-email`;
+  const magicLink = `${base}?token=${token}`;
+
+  try {
+    await sendMagicLinkEmail(email, magicLink);
+  } catch (err) {
+    console.error("[EMAIL] Failed to send magic link:", err.message);
+    return res.status(502).json({ error: "Failed to send magic-link email." });
+  }
+
   res.json({
-    message: "Magic-link token created. Embed it in a link and send it to the user.",
+    message: "Magic link sent to " + email,
     token,
     expiresInSeconds: 600,
   });

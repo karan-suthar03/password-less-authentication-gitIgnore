@@ -57,10 +57,12 @@ export class PasskeyClient {
     } catch (err) { this._handleAxiosError(err); }
   }
 
-  async login(email) {
+  async login(email, callbackUrl) {
     if (!email) throw new Error("login: email is required");
+    const payload = { email };
+    if (callbackUrl) payload.callbackUrl = callbackUrl;
     try {
-      const { data } = await this._http.post("/auth/login", { email });
+      const { data } = await this._http.post("/auth/login", payload);
       return data;
     } catch (err) { this._handleAxiosError(err); }
   }

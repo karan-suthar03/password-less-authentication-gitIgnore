@@ -36,14 +36,7 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    const { token } = await passkey.login(email);
-
-    const magicLink = `${FRONTEND_ORIGIN}/verify-email?token=${token}`;
-
-    console.log(`\n────────────────────────────────────────────────`);
-    console.log(`[EMAIL SIM] Magic link for ${email}:`);
-    console.log(magicLink);
-    console.log(`────────────────────────────────────────────────\n`);
+    const { token } = await passkey.login(email, `${FRONTEND_ORIGIN}/verify-email`);
 
     pendingKyc.set(token, {
       govIdHash: createHash("sha256").update(govIdNumber).digest("hex"),
