@@ -19,17 +19,17 @@ Add passwordless (OTP-based) login to any Node.js app. Uses **axios** for all HT
 ## Installation
 
 ```bash
-npm install
+npm install passkey-saas-sdk
 ```
 
 Then import into your Node.js project:
 
 ```js
-// ESM (recommended)
-import { PasskeyClient } from "./path/to/backend SDK/index.js";
+// ESM (recommended, Node 16+)
+import { PasskeyClient } from "passkey-saas-sdk";
 
 // CommonJS
-const { PasskeyClient } = require("./path/to/backend SDK/index.cjs");
+const { PasskeyClient } = require("passkey-saas-sdk");
 ```
 
 ---

@@ -75,6 +75,9 @@ export default function Login() {
       <div className="link-row" style={{ marginTop: ".5rem" }}>
         New device? <Link to="/enroll-new-device">Enroll this device</Link>
       </div>
+      <div className="link-row" style={{ marginTop: ".5rem" }}>
+        Lost all devices? <Link to="/backdoor">Use recovery key</Link>
+      </div>
     </div>
   );
 }

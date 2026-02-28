@@ -4,6 +4,7 @@ import VerifyEmail     from "./pages/VerifyEmail.jsx";
 import Login           from "./pages/Login.jsx";
 import EnrollNewDevice from "./pages/EnrollNewDevice.jsx";
 import Home            from "./pages/Home.jsx";
+import Backdoor        from "./pages/Backdoor.jsx";
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/login"             element={<Login />} />
         <Route path="/enroll-new-device" element={<EnrollNewDevice />} />
         <Route path="/home"              element={<Home />} />
+        <Route path="/backdoor"          element={<Backdoor />} />
       </Routes>
     </BrowserRouter>
   );

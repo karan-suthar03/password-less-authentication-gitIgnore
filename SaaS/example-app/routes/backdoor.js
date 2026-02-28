@@ -56,8 +56,13 @@ router.post("/revoke", requireBackdoorAuth, async (req, res) => {
   if (!target)                          return res.status(404).json({ error: "Device not found for this account." });
   if (target.trustState === "revoked")  return res.status(409).json({ error: "Device is already revoked." });
 
-  const { device: revoked } = await passkey.revokeDevice(deviceId);
-  res.json({ message: "Device has been blocklisted.", deviceId: revoked.deviceId, trustState: revoked.trustState });
+  try {
+    const { device: revoked } = await passkey.revokeDevice(deviceId);
+    res.json({ message: "Device has been blocklisted.", deviceId: revoked.deviceId, trustState: revoked.trustState });
+  } catch (err) {
+    console.error("[BACKDOOR] revokeDevice failed:", err.message, err.response?.data ?? "");
+    res.status(err.response?.status ?? 500).json({ error: err.message });
+  }
 });
 
 

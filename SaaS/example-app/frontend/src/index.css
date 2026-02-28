@@ -60,7 +60,7 @@ label {
   letter-spacing: .04em;
   color: var(--muted);
   text-transform: uppercase;
-}
+  }
 
 input {
   background: var(--bg);

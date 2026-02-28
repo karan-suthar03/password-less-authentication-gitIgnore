@@ -1,13 +1,37 @@
 {
   "name": "passkey-browser-sdk",
   "version": "1.0.0",
-  "description": "Browser SDK for PassKey SaaS — wraps the WebAuthn OS APIs (Windows Hello, Touch ID, Face ID) and communicates with your customer backend.",
+  "description": "Browser SDK for PassKey SaaS — wraps WebAuthn OS APIs (Windows Hello, Touch ID, Face ID) and communicates with your customer backend.",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "index.d.ts",
   "type": "module",
-  "main": "index.js",
   "exports": {
-    ".": "./index.js"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./index.d.ts"
+    }
+  },
+  "unpkg": "dist/index.umd.js",
+  "jsdelivr": "dist/index.umd.js",
+  "files": [
+    "dist",
+    "index.d.ts",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "prepublishOnly": "npm run build"
   },
   "keywords": ["passwordless", "webauthn", "passkey", "windows-hello", "touch-id", "browser", "sdk"],
+  "author": "",
   "license": "MIT",
-  "sideEffects": false
+  "sideEffects": false,
+  "browser": "dist/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "rollup": "^4.0.0"
+  }
 }

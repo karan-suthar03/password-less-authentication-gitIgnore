@@ -1,5 +1,5 @@
 import express from "express";
-import { verifySignupToken } from "../modules/auth/auth.service.js";
+import { verifySignupToken, issueAccessToken } from "../modules/auth/auth.service.js";
 import { createUserFromVerified } from "../modules/identity/identity.service.js";
 import { baseCookieOptions } from "../modules/cookie.config.js";
 import passkey from "../passkey.js";
@@ -45,6 +45,18 @@ router.post("/", async (req, res) => {
   res.cookie("device_id", device.deviceId, {
     ...baseCookieOptions,
     maxAge: 365 * 24 * 60 * 60 * 1000,
+  });
+
+  // Auto-login: issue access token so user is authenticated immediately after signup
+  const accessToken = issueAccessToken({
+    userId:     user.userId,
+    deviceId:   device.deviceId,
+    trustState: device.trustState,
+  });
+
+  res.cookie("access_token", accessToken, {
+    ...baseCookieOptions,
+    maxAge: 15 * 60 * 1000,
   });
 
   res.status(201).json({
